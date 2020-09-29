@@ -11,6 +11,16 @@ import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.errors.WakeupException;
 
 
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.io.FileWriter;   // Import the FileWriter class
+
+
+import java.io.File;  // Import the File class
+import java.io.IOException;  // Import the IOException class to handle errors
+
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -259,19 +269,71 @@ public class NCDSSession {
                     consumer = ncdsClient.NCDSKafkaConsumer(topic, timestamp);
                 }
                 try {
-                    while (true) {
-                        //ConsumerRecords<String, GenericRecord> records = consumer.poll(Duration.ofMinutes(Integer.parseInt("1")));
-                        ConsumerRecords<String, GenericRecord> records = consumer.poll(Long.MAX_VALUE);
-                        if (records.count() == 0) {
-                            System.out.println("No Records Found for the Topic:" + topic);
+
+                    String timeStamp = new SimpleDateFormat("yyyy_MM_dd__HH_mm_ss").format(new Date());
+
+                    try {
+                        File myObj = new File("NASDAQ_"+ timeStamp + ".csv");
+                        if (myObj.createNewFile()) {
+                            System.out.println("File created: " + myObj.getName());
+                        } else {
+                            System.out.println("File already exists.");
                         }
-                        for (ConsumerRecord<String, GenericRecord> record : records) {
-                            Object value = record.value().get("symbol");
-                            if (value != null && value.toString().trim().equals("TSLA")) {
-                                System.out.println("value :" + record.value().toString());
+
+                    } catch (IOException e) {
+                        System.out.println("An error occurred.");
+                        e.printStackTrace();
+                    }
+
+                    try {
+                        FileWriter myWriter = new FileWriter("NASDAQ_" + timeStamp + ".csv");
+                        myWriter.write("Timestamp,Ask Px, Ask Qty, Bid Px, Bid Qty\n");
+
+                        while (true) {
+                            //ConsumerRecords<String, GenericRecord> records = consumer.poll(Duration.ofMinutes(Integer.parseInt("1")));
+                            ConsumerRecords<String, GenericRecord> records = consumer.poll(Long.MAX_VALUE);
+                            if (records.count() == 0) {
+                                System.out.println("No Records Found for the Topic:" + topic);
                             }
+                            for (ConsumerRecord<String, GenericRecord> record : records) {
+                                Object value = record.value().get("symbol");
+                                if (value != null && value.toString().trim().equals("TSLA")) {
+                                    //Date object
+                                    Date date = new Date();
+                                    //getTime() returns current time in milliseconds
+                                    long time = date.getTime();
+                                    //Passed the milliseconds to constructor of Timestamp class
+                                    Timestamp ts = new Timestamp(time);
+
+                                    double bid_px = Integer.parseInt(record.value().get("bidPrice").toString()) / 10000.0;
+                                    double ask_px = Integer.parseInt(record.value().get("askPrice").toString()) / 10000.0;
+                                    int bid_qty = (int) record.value().get("bidQuantity");
+                                    int ask_qty = (int) record.value().get("askQuantity");
+                                    ;
+                                    System.out.println("Update from NASDAQ: Bid px: "
+                                            + String.valueOf(bid_px) + "\tBid Qty: " + String.valueOf(bid_qty)
+                                            + "\tAsk px: " + String.valueOf(bid_px) + "\tAsk Qty: " + String.valueOf(bid_qty)
+                                            + "\tTimeStamp: " + ts);
+
+                                    myWriter.write(Long.toString(time));
+                                    myWriter.write(",");
+                                    myWriter.write(Double.toString(ask_px));
+                                    myWriter.write(",");
+                                    myWriter.write(Integer.toString(ask_qty));
+                                    myWriter.write(",");
+                                    myWriter.write(Double.toString(bid_px));
+                                    myWriter.write(",");
+                                    myWriter.write(Integer.toString(bid_qty));
+                                    myWriter.write("\n");
+
+                                    //                                System.out.println("value :" + record.value().toString());
+                                }
+                            }
+                            consumer.commitAsync();
                         }
-                        consumer.commitAsync();
+                    } catch (IOException e) {
+                        System.out.println("An error occurred.");
+                        e.printStackTrace();
                     }
                 } catch (WakeupException e) {
                     // ignore for shutdown
