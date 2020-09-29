@@ -253,7 +253,7 @@ public class NCDSSession {
                 ncdsClient = new NCDSClient(securityCfg,kafkaConfig);
                 Consumer consumer;
                 if (timestamp == null){
-                    consumer = ncdsClient.NCDSKafkaConsumer(topic);
+                    consumer = ncdsClient.NCDSKafkaConsumer(topic, System.currentTimeMillis());
                 }
                 else {
                     consumer = ncdsClient.NCDSKafkaConsumer(topic, timestamp);
@@ -266,7 +266,10 @@ public class NCDSSession {
                             System.out.println("No Records Found for the Topic:" + topic);
                         }
                         for (ConsumerRecord<String, GenericRecord> record : records) {
-                            System.out.println("value :" + record.value().toString());
+                            Object value = record.value().get("symbol");
+                            if (value != null && value.toString().trim().equals("TSLA")) {
+                                System.out.println("value :" + record.value().toString());
+                            }
                         }
                         consumer.commitAsync();
                     }
