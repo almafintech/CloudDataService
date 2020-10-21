@@ -13,7 +13,7 @@ import org.apache.kafka.common.errors.WakeupException;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.*;
 import java.io.FileWriter;   // Import the FileWriter class
 
 
@@ -25,8 +25,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.time.Duration;
-import java.util.Map;
-import java.util.Properties;
 
 public class NCDSSession {
 
@@ -297,7 +295,11 @@ public class NCDSSession {
                             }
                             for (ConsumerRecord<String, GenericRecord> record : records) {
                                 Object value = record.value().get("symbol");
-                                if (value != null && value.toString().trim().equals("TSLA")) {
+
+                                List<String> tickers = new ArrayList<String>();
+                                tickers.add("TSLA");
+
+                                if (value != null && tickers.contains(value.toString().trim())) {
                                     //Date object
                                     Date date = new Date();
                                     //getTime() returns current time in milliseconds
