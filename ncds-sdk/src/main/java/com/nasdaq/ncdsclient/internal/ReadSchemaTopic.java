@@ -124,7 +124,9 @@ public class ReadSchemaTopic {
             }
 
             Schema.Parser parser = new Schema.Parser();
-            controlMessageSchema = parser.parse(ClassLoader.getSystemResourceAsStream("ControlMessageSchema.avsc"));
+
+            ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+            controlMessageSchema = parser.parse(classloader.getResourceAsStream("ControlMessageSchema.avsc"));
 
             if (IsItJunit.isJUnitTest()) {
                 kafkaProps = KafkaConfigLoader.loadConfig();

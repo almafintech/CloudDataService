@@ -11,19 +11,13 @@ import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.errors.WakeupException;
 
 
+import java.io.*;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.io.FileWriter;   // Import the FileWriter class
-
-
-import java.io.File;  // Import the File class
-import java.io.IOException;  // Import the IOException class to handle errors
 
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.time.Duration;
 
 public class NCDSSession {
@@ -283,6 +277,29 @@ public class NCDSSession {
                         e.printStackTrace();
                     }
 
+                    String File = "nyse";
+                    String csvFile = File + ".csv";
+                    BufferedReader br = null;
+                    String line = "";
+                    String cvsSplitBy = ",";
+                    List<String> tickers = new ArrayList<String>();
+                    try {
+
+                        br = new BufferedReader(new FileReader(csvFile));
+                        while ((line = br.readLine()) != null) {
+
+                            // use comma as separator
+                            String[] ticker = line.split(cvsSplitBy);
+
+                            tickers.add(ticker[0]);
+
+                        }
+
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+
+                    System.out.println(tickers);
                     try {
                         FileWriter myWriter = new FileWriter("NASDAQ_" + timeStamp + ".csv");
                         myWriter.write("Timestamp,Ask Px, Ask Qty, Bid Px, Bid Qty\n");
@@ -294,10 +311,13 @@ public class NCDSSession {
                                 System.out.println("No Records Found for the Topic:" + topic);
                             }
                             for (ConsumerRecord<String, GenericRecord> record : records) {
+                                System.out.println("value :" + record.value().toString());
                                 Object value = record.value().get("symbol");
 
-                                List<String> tickers = new ArrayList<String>();
-                                tickers.add("TSLA");
+                                if (value != null && value.toString().trim().startsWith("BRK")) {
+//                                    System.err.println(value.toString().trim());
+                                }
+
 
                                 if (value != null && tickers.contains(value.toString().trim())) {
                                     //Date object
@@ -307,26 +327,31 @@ public class NCDSSession {
                                     //Passed the milliseconds to constructor of Timestamp class
                                     Timestamp ts = new Timestamp(time);
 
-                                    double bid_px = Integer.parseInt(record.value().get("bidPrice").toString()) / 10000.0;
-                                    double ask_px = Integer.parseInt(record.value().get("askPrice").toString()) / 10000.0;
-                                    int bid_qty = (int) record.value().get("bidQuantity");
-                                    int ask_qty = (int) record.value().get("askQuantity");
-                                    ;
-                                    System.out.println("Update from NASDAQ: Bid px: "
-                                            + String.valueOf(bid_px) + "\tBid Qty: " + String.valueOf(bid_qty)
-                                            + "\tAsk px: " + String.valueOf(bid_px) + "\tAsk Qty: " + String.valueOf(bid_qty)
-                                            + "\tTimeStamp: " + ts);
+                                    System.out.println(value.toString().trim());
+                                    tickers.remove(value.toString().trim());
+                                    System.out.println(tickers);
 
-                                    myWriter.write(Long.toString(time));
-                                    myWriter.write(",");
-                                    myWriter.write(Double.toString(ask_px));
-                                    myWriter.write(",");
-                                    myWriter.write(Integer.toString(ask_qty));
-                                    myWriter.write(",");
-                                    myWriter.write(Double.toString(bid_px));
-                                    myWriter.write(",");
-                                    myWriter.write(Integer.toString(bid_qty));
-                                    myWriter.write("\n");
+
+//                                    double bid_px = Integer.parseInt(record.value().get("bidPrice").toString()) / 10000.0;
+//                                    double ask_px = Integer.parseInt(record.value().get("askPrice").toString()) / 10000.0;
+//                                    int bid_qty = (int) record.value().get("bidQuantity");
+//                                    int ask_qty = (int) record.value().get("askQuantity");
+                                    ;
+//                                    System.out.println("Update from NASDAQ: Bid px: "
+//                                            + String.valueOf(bid_px) + "\tBid Qty: " + String.valueOf(bid_qty)
+//                                            + "\tAsk px: " + String.valueOf(bid_px) + "\tAsk Qty: " + String.valueOf(bid_qty)
+//                                            + "\tTimeStamp: " + ts);
+//
+//                                    myWriter.write(Long.toString(time));
+//                                    myWriter.write(",");
+//                                    myWriter.write(Double.toString(ask_px));
+//                                    myWriter.write(",");
+//                                    myWriter.write(Integer.toString(ask_qty));
+//                                    myWriter.write(",");
+//                                    myWriter.write(Double.toString(bid_px));
+//                                    myWriter.write(",");
+//                                    myWriter.write(Integer.toString(bid_qty));
+//                                    myWriter.write("\n");
 
                                     //                                System.out.println("value :" + record.value().toString());
                                 }

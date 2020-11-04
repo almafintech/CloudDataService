@@ -7,7 +7,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 /**
- * Utility to load the auth configuration parameters.
+     * Utility to load the auth configuration parameters.
  */
 public class AuthenticationConfigLoader {
     public static String OAUTH_TOKEN_ENDPOINT_URI ="oauth.token.endpoint.uri";

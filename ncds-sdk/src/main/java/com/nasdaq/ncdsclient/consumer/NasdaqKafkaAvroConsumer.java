@@ -117,6 +117,7 @@ public class NasdaqKafkaAvroConsumer {
                 @Override
                 public void onPartitionsAssigned(Collection<TopicPartition> collection) {
                     Map<TopicPartition,Long> timestmaps = new HashMap();
+                    System.out.println(streamName + ".stream");
                     TopicPartition topicPartition = new TopicPartition(streamName + ".stream",0);
                     timestmaps.put(topicPartition , timestamp);
                     Map<TopicPartition, OffsetAndTimestamp> offsetsForTimes = kafkaConsumer.offsetsForTimes(timestmaps);
